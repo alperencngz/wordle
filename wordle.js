@@ -49,16 +49,32 @@ async function init() {
       header.classList.add("winner");
     }
 
-    for (let i = 0; i < correctWord.length; i++) {
+    /* 
+    This way I cleared my array of correctLetters from the letters that are 
+    guessed correctly, so in the next for loop I won't have the problem of marking
+    wrong guesses as correct for the reason of close guess appearing before the
+    correct guess. 
+    As an example, in previous way if our correct word is PHOTO and we put OHOTO,
+    the first o would be marked as close eventhough it shouldn't.
+    */
+    for (let i = 0; i < ANSWER_LENGTH; i++) {
+      const guessLetter = currentGuess[i];
+      const correctLetter = correctWord[i];
+      if (correctLetter === guessLetter) {
+        letters[currentRow * ANSWER_LENGTH + i].classList.add("correct");
+        const index = correctLetters.indexOf(guessLetter);
+        correctLetters[index] = " ";
+        isCorrect = true;
+      }
+    }
+
+    for (let i = 0; i < ANSWER_LENGTH; i++) {
       let isCorrect = false;
       let isClose = false;
       const guessLetter = currentGuess[i];
       const correctLetter = correctWord[i];
 
       if (correctLetter === guessLetter) {
-        letters[currentRow * ANSWER_LENGTH + i].classList.add("correct");
-        const index = correctLetters.indexOf(guessLetter);
-        correctLetters[index] = " ";
         isCorrect = true;
       }
 
