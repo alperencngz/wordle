@@ -15,6 +15,7 @@ async function init() {
   const res = await fetch("https://words.dev-apis.com/word-of-the-day");
   const resObj = await res.json();
   const word = resObj.word.toUpperCase();
+  const wordParts = word.split("");
   setLoading(false);
 
   /* LOGIC FUNCTIONS */
@@ -40,52 +41,23 @@ async function init() {
     }
 
     /* CONTROLLING THE LETTERS */
+    const guessParts = currentGuess.split("");
+    const map = makeMap(wordParts);
 
-    const correctWord = word;
-    const correctLetters = correctWord.split("");
-
-    if (currentGuess === correctWord) {
-      const header = document.querySelector(".brand");
-      header.classList.add("winner");
-    }
-
-    /* 
-    This way I cleared my array of correctLetters from the letters that are 
-    guessed correctly, so in the next for loop I won't have the problem of marking
-    wrong guesses as correct for the reason of close guess appearing before the
-    correct guess. 
-    As an example, in previous way if our correct word is PHOTO and we put OHOTO,
-    the first o would be marked as close eventhough it shouldn't.
-    */
     for (let i = 0; i < ANSWER_LENGTH; i++) {
-      const guessLetter = currentGuess[i];
-      const correctLetter = correctWord[i];
-      if (correctLetter === guessLetter) {
+      if (guessParts[i] === wordParts[i]) {
         letters[currentRow * ANSWER_LENGTH + i].classList.add("correct");
-        const index = correctLetters.indexOf(guessLetter);
-        correctLetters[index] = " ";
-        isCorrect = true;
+        map[guessParts[i]]--;
       }
     }
 
     for (let i = 0; i < ANSWER_LENGTH; i++) {
-      let isCorrect = false;
-      let isClose = false;
-      const guessLetter = currentGuess[i];
-      const correctLetter = correctWord[i];
-
-      if (correctLetter === guessLetter) {
-        isCorrect = true;
-      }
-
-      if (correctLetters.includes(guessLetter) && !isCorrect) {
+      if (guessParts[i] === wordParts[i]) {
+        // do nothing, handled above
+      } else if (wordParts.includes(guessParts[i]) && map[guessParts[i]] > 0) {
         letters[currentRow * ANSWER_LENGTH + i].classList.add("close");
-        const index = correctLetters.indexOf(guessLetter);
-        correctLetters[index] = " ";
-        isClose = true;
-      }
-
-      if (!isClose && !isCorrect) {
+        map[guessParts[i]]--;
+      } else {
         letters[currentRow * ANSWER_LENGTH + i].classList.add("wrong");
       }
     }
@@ -130,5 +102,17 @@ const isLetter = (letter) => {
 const setLoading = (isLoading) => {
   loadingDiv.classList.toggle("hidden", !isLoading);
 };
+
+function makeMap(array) {
+  const obj = {};
+  for (let i = 0; i < array.length; i++) {
+    if (obj[array[i]]) {
+      obj[array[i]]++;
+    } else {
+      obj[array[i]] = 1;
+    }
+  }
+  return obj;
+}
 
 init();
