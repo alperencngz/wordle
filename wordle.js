@@ -5,18 +5,22 @@ const loadingDiv = document.querySelector(".info-bar");
 
 /* GLOBAL CONSTANTS */
 const ANSWER_LENGTH = 5;
+const ROUNDS = 6;
 
 /* INIT FUNCTION */
 
 async function init() {
   let currentGuess = "";
   let currentRow = 0;
+  let isLoading = true;
 
   const res = await fetch("https://words.dev-apis.com/word-of-the-day");
   const resObj = await res.json();
   const word = resObj.word.toUpperCase();
   const wordParts = word.split("");
+  let done = false;
   setLoading(false);
+  isLoading = false;
 
   /* LOGIC FUNCTIONS */
 
@@ -37,6 +41,26 @@ async function init() {
 
   const commit = async () => {
     if (currentGuess.length !== ANSWER_LENGTH) {
+      return;
+    }
+
+    isLoading = true;
+    setLoading(true);
+    const res = await fetch("https://words.dev-apis.com/validate-word", {
+      method: "POST",
+      body: JSON.stringify({
+        word: currentGuess,
+      }),
+    });
+    const resObj = await res.json();
+    const isValidWord = resObj.validWord;
+    // const {validWord} = resObj;
+
+    setLoading(false);
+    isLoading = false;
+
+    if (!isValidWord) {
+      markInvalidWord();
       return;
     }
 
@@ -63,6 +87,15 @@ async function init() {
     }
 
     currentRow++;
+    if (currentGuess === word) {
+      document.querySelector(".brand").classList.add("winner");
+      done = true;
+      return;
+    } else if (currentRow === ROUNDS) {
+      alert(`You lose, the word was ${word}`);
+      done = true;
+    }
+
     currentGuess = "";
   };
 
@@ -76,9 +109,25 @@ async function init() {
     }
   };
 
+  const markInvalidWord = () => {
+    // alert("Not a valid word");
+
+    for (let i = 0; i < ANSWER_LENGTH; i++) {
+      letters[currentRow * ANSWER_LENGTH + i].classList.add("invalid");
+    }
+
+    setTimeout(function() {
+      letters[currentRow * ANSWER_LENGTH + i].classList.remove("invalid");
+    }, 10);
+  };
+
   /* INIT FUNCTION LOGIC TREE */
 
   document.addEventListener("keydown", function handleKeyPress(event) {
+    if (done || isLoading) {
+      return;
+    }
+
     const action = event.key;
 
     if (action === "Enter") {
